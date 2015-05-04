@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-var coupod = angular.module('starter', ['ionic', 'ngCordova'])
+var coupod = angular.module('coupod', ['ionic', 'ngCordova'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -18,39 +18,58 @@ var coupod = angular.module('starter', ['ionic', 'ngCordova'])
   });
 });
 
-coupod.service('ValidateScan', function(scanData) {
-    this.validateCustomer = function(scanData) {
-        var customerName = scanData[0];
-        return customerName.length > 0;
-    };
+coupod.config(function ($stateProvider, $urlRouterProvider) {
+    $stateProvider
+        .state('index', {
+            url: '/',
+            controller: 'HomeController',
+            templateUrl: 'templates/home.html'
+        })
+        .state('scan', {
+            url: '/scan',
+            'controller': 'ScannerController',
+            templateUrl: 'templates/scan.html'
+        });
+    $urlRouterProvider.otherwise('/');
+});
 
-    this.validateHash = function(scanData) {
+coupod.factory('ValidateScan', function() {
+    return {
+        validateCustomer: function(scanData) {
+            var customerName = scanData[0];
+            return customerName.length > 0;
+        },
+        validateHash: function(scanData) {
         var transactionHashID = scanData[1];
         return transactionHashID.length > 0;
     }
+    }
 });
 
-coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner) {
+coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner, ValidateScan) {
 
     $scope.scanComplete = false;
     $scope.scanError = false;
-    $scope.qrObj = [];
+    $scope.qrObj = {};
 
   $scope.scan = function() {
     $cordovaBarcodeScanner.scan().then(function(imageData) {
         if(!imageData.cancelled) {
-            $scope.qrObj = imageData.text.split(",");
-            if($scope.qrObj.length == 2) {
+            var splitScan = imageData.text.split(",");
+            if( ValidateScan.validateCustomer(splitScan) && ValidateScan.validateHash(splitScan) ) {
+                $scope.qrObj["company"] = splitScan[0];
+                $scope.qrObj["transaction_id"] = splitScan[1];
                 $scope.scanComplete = true;
                 $scope.scanError = false;
             }
             else {
+                console.log(splitScan);
                 $scope.scanError = true;
                 $scope.scanComplete = false;
             }
         }
         else {
-            $scope.scanError = true;
+            $scope.scanError = false;
             $scope.scanComplete = false;
         }
     }, function(error) {
@@ -58,5 +77,36 @@ coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner) 
         console.log("An error occurred -> " + error);
     });
   };
+
+});
+
+coupod.controller('HomeController', function ($scope, $state, $templateCache, $q, $rootScope) {
+    $scope.goToSignUp = function () {
+        $state.go('signup');
+    };
+
+    $scope.goToForgotPassword = function () {
+        $state.go('forgot-password');
+    };
+
+    $scope.doLogIn = function () {
+        $state.go('app.feeds-categories');
+    };
+
+    $scope.goToScanner = function () {
+        $state.go('scan');
+    };
+
+    $scope.user = {};
+
+    $scope.user.email = "admin";
+    $scope.user.password = "admin";
+
+    // We need this for the form validation
+    $scope.selected_tab = "";
+
+    $scope.$on('my-tabs-changed', function (event, data) {
+        $scope.selected_tab = data.title;
+    });
 
 });
