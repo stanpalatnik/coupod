@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-var coupod = angular.module('coupod', ['ionic', 'ngCordova'])
+var coupod = angular.module('coupod', ['coupod-constants', 'ionic', 'ngCordova'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -46,7 +46,7 @@ coupod.factory('ValidateScan', function() {
     }
 });
 
-coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner, ValidateScan) {
+coupod.controller("ScannerController", function($scope, $state, $cordovaBarcodeScanner, ValidateScan, hashid_salt) {
 
     $scope.scanComplete = false;
     $scope.scanError = false;
@@ -55,9 +55,10 @@ coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner, 
   $scope.scan = function() {
     $cordovaBarcodeScanner.scan().then(function(imageData) {
         if(!imageData.cancelled) {
-            var splitScan = imageData.text.split(",");
+            var hashid = new Hashids(hashid_salt);
+            var splitScan = hashid.decode(imageData);
             if( ValidateScan.validateCustomer(splitScan) && ValidateScan.validateHash(splitScan) ) {
-                $scope.qrObj["company"] = splitScan[0];
+                $scope.qrObj["company_id"] = splitScan[0];
                 $scope.qrObj["transaction_id"] = splitScan[1];
                 $scope.scanComplete = true;
                 $scope.scanError = false;
@@ -77,7 +78,6 @@ coupod.controller("ScannerController", function($scope, $cordovaBarcodeScanner, 
         console.log("An error occurred -> " + error);
     });
   };
-
 });
 
 coupod.controller('HomeController', function ($scope, $state, $templateCache, $q, $rootScope) {

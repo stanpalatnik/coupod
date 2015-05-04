@@ -1,9 +1,11 @@
 <ion-view class="scan" title="scan">
     <ion-content>
-        Scan store QR code to apply coupon<br/>
-        <button class="button" ng-click="scan()"><i class="icon ion-qr-scanner"></i></button>
-        <div ng-show="scanComplete">Success! Opening transaction with:  {{qrObj[0]}}. They should take care of the rest.
-            <p class="debug">Scanned QR code: {{qrObj[1]}} </p>
+        <div ng-hide="scanComplete">
+            Scan store QR code to apply coupon<br/>
+            <button class="button" ng-click="scan()"><i class="icon ion-qr-scanner"></i></button>
+        </div>
+        <div ng-show="scanComplete">Success! Opening transaction with:  {{qrObj["company"]}}. They should take care of the rest.
+            <p class="debug">Scanned QR code: {{qrObj["transaction_id"]}} </p>
         </div>
         <div ng-show="scanError">That scan didn't work! Please try again or let the store know they messed up.</div>
     </ion-content>
